@@ -137,40 +137,42 @@ let currentSubtitle = null;
 
 videoPlayer.addEventListener('timeupdate', () => {
     const currentTime = videoPlayer.currentTime;
-    // Find the subtitle that matches current time
     const activeSub = subtitles.find(s => {
         const start = s.timestamp[0];
-        const end = s.timestamp[1] || start + 5; // fallback
+        const end = s.timestamp[1] || start + 5;
         return currentTime >= start && currentTime <= end;
     });
     
     if (activeSub !== currentSubtitle) {
         currentSubtitle = activeSub;
-        renderSubtitles();
+        if (!isExporting) renderSubtitles();
     }
 });
+
+let isExporting = false;
 
 function renderSubtitles() {
     const ctx = subtitleCanvas.getContext('2d');
     
-    // Resize canvas to match video intrinsic size
     if (videoPlayer.videoWidth && subtitleCanvas.width !== videoPlayer.videoWidth) {
         subtitleCanvas.width = videoPlayer.videoWidth;
         subtitleCanvas.height = videoPlayer.videoHeight;
     }
     
-    ctx.clearRect(0, 0, subtitleCanvas.width, subtitleCanvas.height);
+    if (isExporting) {
+        ctx.drawImage(videoPlayer, 0, 0, subtitleCanvas.width, subtitleCanvas.height);
+    } else {
+        ctx.clearRect(0, 0, subtitleCanvas.width, subtitleCanvas.height);
+    }
     
     if (!currentSubtitle || !currentSubtitle.text) return;
     
-    // Get Styles
     const color = document.getElementById('style-color').value;
     const bgColor = document.getElementById('style-bg').value;
     const bgOpacity = parseFloat(document.getElementById('style-opacity').value);
     const rawSize = parseInt(document.getElementById('style-size').value, 10);
-    const posY = parseInt(document.getElementById('style-y').value, 10); // 10 to 100 percentage
+    const posY = parseInt(document.getElementById('style-y').value, 10);
     
-    // Scale font size based on video height (assuming 1080p base for rawSize)
     const scaleFactor = subtitleCanvas.height / 1080;
     const fontSize = Math.max(16, rawSize * scaleFactor * 2);
     
@@ -182,34 +184,64 @@ function renderSubtitles() {
     const x = subtitleCanvas.width / 2;
     const y = (subtitleCanvas.height * posY) / 100;
     
-    const metrics = ctx.measureText(text);
-    const textWidth = metrics.width;
-    const textHeight = fontSize * 1.2;
+    // Text Wrapping
+    const maxWidth = subtitleCanvas.width * 0.9; // Max 90% of screen width
+    const words = text.split(' ');
+    let line = '';
+    const lines = [];
+
+    for(let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+            lines.push(line);
+            line = words[n] + ' ';
+        } else {
+            line = testLine;
+        }
+    }
+    lines.push(line);
+
+    const lineHeight = fontSize * 1.3;
+    const totalHeight = lines.length * lineHeight;
     
-    // Draw Background
+    let maxLineWidth = 0;
+    lines.forEach(l => {
+        const w = ctx.measureText(l).width;
+        if (w > maxLineWidth) maxLineWidth = w;
+    });
+
     if (bgOpacity > 0) {
         ctx.fillStyle = hexToRgba(bgColor, bgOpacity);
         const paddingX = 20 * scaleFactor;
         const paddingY = 10 * scaleFactor;
         ctx.beginPath();
+        
+        // Calculate top-left of the bounding box
+        const startY = y - (totalHeight / 2);
+        
         ctx.roundRect(
-            x - (textWidth / 2) - paddingX, 
-            y - (textHeight / 2) - paddingY, 
-            textWidth + (paddingX * 2), 
-            textHeight + (paddingY * 2), 
+            x - (maxLineWidth / 2) - paddingX, 
+            startY - paddingY, 
+            maxLineWidth + (paddingX * 2), 
+            totalHeight + (paddingY * 2), 
             10 * scaleFactor
         );
         ctx.fill();
     }
     
-    // Draw Text
     ctx.fillStyle = color;
     ctx.shadowColor = 'rgba(0,0,0,0.8)';
     ctx.shadowBlur = 4;
     ctx.shadowOffsetX = 2;
     ctx.shadowOffsetY = 2;
-    ctx.fillText(text, x, y);
-    ctx.shadowBlur = 0; // reset
+    
+    let currentY = y - (totalHeight / 2) + (lineHeight / 2);
+    for(let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], x, currentY);
+        currentY += lineHeight;
+    }
+    ctx.shadowBlur = 0;
 }
 
 function hexToRgba(hex, alpha) {
@@ -275,15 +307,11 @@ document.getElementById('export-video-btn').addEventListener('click', async () =
     const confirmExport = confirm('To export the video, we need to play it from start to finish to record the subtitles. Do you want to proceed?');
     if (!confirmExport) return;
 
-    // Reset video
     videoPlayer.currentTime = 0;
+    isExporting = true;
     
-    // Capture streams
-    const canvasStream = subtitleCanvas.captureStream(30); // 30 fps
+    const canvasStream = subtitleCanvas.captureStream(30);
     
-    // Attempt to get audio stream from video element
-    // Note: Due to cross-origin/local file restrictions, captureStream() on a video might sometimes omit audio.
-    let audioStream;
     try {
         if (videoPlayer.captureStream) {
             const vidStream = videoPlayer.captureStream();
@@ -318,18 +346,25 @@ document.getElementById('export-video-btn').addEventListener('click', async () =
         a.click();
         URL.revokeObjectURL(url);
         
+        isExporting = false;
+        renderSubtitles(); // clear the final frame
         updateProgress('Export complete!', 100);
     };
 
-    // UI Updates
     updateProgress('Recording video export...', 0);
     
     mediaRecorder.start();
     videoPlayer.play();
 
-    // Stop recording when video ends
+    function renderExportLoop() {
+        if (!isExporting) return;
+        renderSubtitles(); // This now draws the video frame AND the subtitles
+        requestAnimationFrame(renderExportLoop);
+    }
+    renderExportLoop();
+
     videoPlayer.onended = () => {
         mediaRecorder.stop();
-        videoPlayer.onended = null; // cleanup
+        videoPlayer.onended = null;
     };
 });
