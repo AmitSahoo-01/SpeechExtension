@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Auto-Subtitle Generator",
+  "version": "1.0",
+  "description": "Generate subtitles locally for your videos using AI.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

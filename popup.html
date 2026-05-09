@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Subtitle AI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container glass-panel">
+        <header>
+            <h1>Auto-Subtitle AI</h1>
+            <p>Generate fully offline, private AI subtitles.</p>
+        </header>
+
+        <!-- Main Workspace -->
+        <main>
+            <!-- Step 1: Upload -->
+            <section id="upload-section" class="active">
+                <div id="drop-zone" class="glass-box">
+                    <div class="upload-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    </div>
+                    <h2>Drag & Drop your video</h2>
+                    <p>or click to browse files</p>
+                    <input type="file" id="file-input" accept="video/mp4,video/webm,video/x-m4v,video/*" hidden>
+                    <button id="browse-btn" class="primary-btn">Browse Files</button>
+                </div>
+            </section>
+
+            <!-- Step 2: Processing & Preview -->
+            <section id="preview-section" class="hidden">
+                <div class="video-container">
+                    <video id="video-player" controls></video>
+                    <canvas id="subtitle-canvas"></canvas>
+                </div>
+                
+                <div id="progress-container" class="hidden glass-box">
+                    <h3 id="progress-status">Processing...</h3>
+                    <div class="progress-bar-bg">
+                        <div id="progress-bar" class="progress-bar-fill"></div>
+                    </div>
+                    <p id="progress-text">0%</p>
+                </div>
+
+                <div class="controls-panel glass-box">
+                    <h3>Subtitle Styling</h3>
+                    <div class="control-grid">
+                        <div class="control-group">
+                            <label>Text Color</label>
+                            <input type="color" id="style-color" value="#ffffff">
+                        </div>
+                        <div class="control-group">
+                            <label>Background</label>
+                            <input type="color" id="style-bg" value="#000000">
+                        </div>
+                        <div class="control-group">
+                            <label>Bg Opacity</label>
+                            <input type="range" id="style-opacity" min="0" max="1" step="0.1" value="0.5">
+                        </div>
+                        <div class="control-group">
+                            <label>Size</label>
+                            <input type="range" id="style-size" min="16" max="64" step="2" value="28">
+                        </div>
+                        <div class="control-group">
+                            <label>Position</label>
+                            <input type="range" id="style-y" min="10" max="100" step="1" value="90">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <button id="preset-reels-btn" class="secondary-btn" style="width: 100%; border: 1px solid var(--primary);">Apply "Instagram Reel" Preset</button>
+                    </div>
+                    
+                    <div class="export-actions">
+                        <button id="export-srt-btn" class="secondary-btn">Export .SRT</button>
+                        <button id="export-video-btn" class="primary-btn">Export Video</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- We will use ES modules so we load our main logic as a module -->
+    <script type="module" src="popup.js"></script>
+</body>
+</html>
