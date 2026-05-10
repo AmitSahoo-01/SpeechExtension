@@ -139,6 +139,11 @@ video {
     object-fit: contain;
 }
 
+/* Hide the native fullscreen button because Chrome extension popups do not support fullscreen mode */
+video::-webkit-media-controls-fullscreen-button {
+    display: none !important;
+}
+
 canvas#subtitle-canvas {
     position: absolute;
     top: 0;

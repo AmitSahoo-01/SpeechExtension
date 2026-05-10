@@ -173,8 +173,9 @@ function renderSubtitles() {
     const rawSize = parseInt(document.getElementById('style-size').value, 10);
     const posY = parseInt(document.getElementById('style-y').value, 10);
     
-    const scaleFactor = subtitleCanvas.height / 1080;
-    const fontSize = Math.max(16, rawSize * scaleFactor * 2);
+    // Scale proportionally to the largest dimension of the video (baseline 1080p)
+    const scaleFactor = Math.max(subtitleCanvas.width, subtitleCanvas.height) / 1080;
+    const fontSize = Math.max(14, rawSize * scaleFactor * 1.2);
     
     ctx.font = `bold ${fontSize}px Inter, sans-serif`;
     ctx.textAlign = 'center';
@@ -213,8 +214,9 @@ function renderSubtitles() {
 
     if (bgOpacity > 0) {
         ctx.fillStyle = hexToRgba(bgColor, bgOpacity);
-        const paddingX = 20 * scaleFactor;
-        const paddingY = 10 * scaleFactor;
+        // Reduce padding to make the box tighter around the text
+        const paddingX = 12 * scaleFactor;
+        const paddingY = 8 * scaleFactor;
         ctx.beginPath();
         
         // Calculate top-left of the bounding box
