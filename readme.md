@@ -31,3 +31,14 @@ This is an chrome extension that will generate subtitles for a video and export 
 6. Click "Export Video" to save the video with embedded subtitles, or "Export .SRT" to save the subtitle file only.
 
 Created By Amit.
+
+
+
+<!-- 
+This is the complete working demo of the offline subtitle generator extension.  
+I have added comments explaining the code so you can understand how it works.
+-->
+
+Frist time it takes some time to install a required library. After that it will work smoothly.
+And also second time it does not require internet connection.
+This is the complete offline subtitle generator extension.
